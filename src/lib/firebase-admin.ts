@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { cert, getApps, initializeApp, type ServiceAccount } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import type { ServiceAccount } from 'firebase-admin/app';
+import type { Auth } from 'firebase-admin/auth';
 import { firebaseConfig } from './firebaseConfig.ts';
 
 type ServiceAccountJson = ServiceAccount & {
@@ -39,19 +39,45 @@ function parseServiceAccountFromEnv(): ServiceAccountJson | null {
   }
 }
 
-if (!getApps().length) {
-  const serviceAccount = parseServiceAccountFromEnv();
-  if (serviceAccount) {
-    initializeApp({
-      credential: cert(serviceAccount),
-      projectId:
-        serviceAccount.projectId || serviceAccount.project_id || firebaseConfig.projectId,
-    });
-  } else {
-    initializeApp({
-      projectId: firebaseConfig.projectId,
+let adminAuthPromise: Promise<Auth> | null = null;
+
+/**
+ * Carrega firebase-admin dinamicamente somente quando houver credenciais Admin
+ * (Cloud Run ou FIREBASE_SERVICE_ACCOUNT), evitando require() de ESM na Vercel.
+ */
+export async function getAdminAuth(): Promise<Auth> {
+  if (!hasAdminCredentials()) {
+    throw new Error('Credenciais do Firebase Admin não configuradas neste ambiente.');
+  }
+
+  if (!adminAuthPromise) {
+    adminAuthPromise = (async () => {
+      const [{ cert, getApps, initializeApp }, { getAuth }] = await Promise.all([
+        import('firebase-admin/app'),
+        import('firebase-admin/auth'),
+      ]);
+
+      if (!getApps().length) {
+        const serviceAccount = parseServiceAccountFromEnv();
+        if (serviceAccount) {
+          initializeApp({
+            credential: cert(serviceAccount),
+            projectId:
+              serviceAccount.projectId || serviceAccount.project_id || firebaseConfig.projectId,
+          });
+        } else {
+          initializeApp({
+            projectId: firebaseConfig.projectId,
+          });
+        }
+      }
+
+      return getAuth();
+    })().catch((err) => {
+      adminAuthPromise = null;
+      throw err;
     });
   }
-}
 
-export const adminAuth = getAuth();
+  return adminAuthPromise;
+}

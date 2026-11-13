@@ -8,7 +8,8 @@ import compression from 'compression';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { GoogleGenAI, Type } from '@google/genai';
 import { requireAuth, type AuthRequest } from './src/middleware/auth.ts';
-import { adminAuth, hasAdminCredentials } from './src/lib/firebase-admin.ts';
+import { getAdminAuth, hasAdminCredentials } from './src/lib/firebase-admin.ts';
+import { verifyFirebaseIdToken } from './src/lib/verifyFirebaseToken.ts';
 import {
   isBrevoConfigured,
   sendConfirmationEmailViaBrevo,
@@ -167,7 +168,7 @@ async function verifyBearerForEmailVerification(
 
   try {
     const token = authHeader.split('Bearer ')[1];
-    const decoded = await adminAuth.verifyIdToken(token, hasAdminCredentials());
+    const decoded = await verifyFirebaseIdToken(token);
     if (!decoded.email) {
       return res.status(400).json({ error: 'E-mail não encontrado na conta.' });
     }
@@ -360,6 +361,7 @@ app.post(
         });
       }
 
+      const adminAuth = await getAdminAuth();
       const continueUrl = resolveAppBaseUrl(req);
       const verificationLink = await adminAuth.generateEmailVerificationLink(email, {
         url: continueUrl,
@@ -413,6 +415,7 @@ app.post(
         return res.status(200).json(GENERIC_FORGOT_PASSWORD_RESPONSE);
       }
 
+      const adminAuth = await getAdminAuth();
       const continueUrl = resolveAppBaseUrl(req);
       const resetLink = await adminAuth.generatePasswordResetLink(cleanEmail, {
         url: continueUrl,
@@ -539,6 +542,7 @@ app.delete('/api/account', requireAuth, async (req: AuthRequest, res) => {
     const uid = req.user!.uid;
     await deleteUserAccountData(uid);
     if (hasAdminCredentials()) {
+      const adminAuth = await getAdminAuth();
       await adminAuth.deleteUser(uid);
       return res.json({ deleted: true });
     }

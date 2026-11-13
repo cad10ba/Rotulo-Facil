@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const initializeAppMock = vi.fn();
 const certMock = vi.fn((sa) => ({ __cert: sa }));
 const getAppsMock = vi.fn(() => []);
-const getAuthMock = vi.fn(() => ({}));
+const getAuthMock = vi.fn(() => ({ verifyIdToken: vi.fn() }));
 
 vi.mock('firebase-admin/app', () => ({
   initializeApp: initializeAppMock,
@@ -20,7 +20,7 @@ vi.mock('firebase-admin/auth', () => ({
   getAuth: getAuthMock,
 }));
 
-describe('src/lib/firebase-admin.ts - hasAdminCredentials e inicialização', () => {
+describe('src/lib/firebase-admin.ts - hasAdminCredentials e getAdminAuth', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
@@ -35,24 +35,27 @@ describe('src/lib/firebase-admin.ts - hasAdminCredentials e inicialização', ()
     process.env = { ...originalEnv };
   });
 
-  it('retorna false quando não há FIREBASE_SERVICE_ACCOUNT, BASE64 nem K_SERVICE e inicializa apenas com projectId', async () => {
-    const { hasAdminCredentials } = await import('./firebase-admin');
+  it('retorna false quando não há FIREBASE_SERVICE_ACCOUNT, BASE64 nem K_SERVICE e recusa getAdminAuth', async () => {
+    const { hasAdminCredentials, getAdminAuth } = await import('./firebase-admin');
 
     expect(hasAdminCredentials()).toBe(false);
+    expect(initializeAppMock).not.toHaveBeenCalled();
+    await expect(getAdminAuth()).rejects.toThrow();
+  });
+
+  it('retorna true quando K_SERVICE está definido (Cloud Run / AI Studio) e inicializa sob demanda', async () => {
+    process.env.K_SERVICE = 'rotulofacil-preview';
+    const { hasAdminCredentials, getAdminAuth } = await import('./firebase-admin');
+
+    expect(hasAdminCredentials()).toBe(true);
+    expect(initializeAppMock).not.toHaveBeenCalled();
+
+    await getAdminAuth();
     expect(certMock).not.toHaveBeenCalled();
     expect(initializeAppMock).toHaveBeenCalledTimes(1);
     expect(initializeAppMock).toHaveBeenCalledWith({
       projectId: expect.any(String),
     });
-  });
-
-  it('retorna true quando K_SERVICE está definido (Cloud Run / AI Studio)', async () => {
-    process.env.K_SERVICE = 'rotulofacil-preview';
-    const { hasAdminCredentials } = await import('./firebase-admin');
-
-    expect(hasAdminCredentials()).toBe(true);
-    expect(certMock).not.toHaveBeenCalled();
-    expect(initializeAppMock).toHaveBeenCalledTimes(1);
   });
 
   it('retorna true quando FIREBASE_SERVICE_ACCOUNT está definida em JSON', async () => {
@@ -62,9 +65,10 @@ describe('src/lib/firebase-admin.ts - hasAdminCredentials e inicialização', ()
       private_key: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----\n',
     });
 
-    const { hasAdminCredentials } = await import('./firebase-admin');
+    const { hasAdminCredentials, getAdminAuth } = await import('./firebase-admin');
 
     expect(hasAdminCredentials()).toBe(true);
+    await getAdminAuth();
     expect(certMock).toHaveBeenCalledTimes(1);
     expect(initializeAppMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -81,9 +85,10 @@ describe('src/lib/firebase-admin.ts - hasAdminCredentials e inicialização', ()
     });
     process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 = Buffer.from(json, 'utf8').toString('base64');
 
-    const { hasAdminCredentials } = await import('./firebase-admin');
+    const { hasAdminCredentials, getAdminAuth } = await import('./firebase-admin');
 
     expect(hasAdminCredentials()).toBe(true);
+    await getAdminAuth();
     expect(certMock).toHaveBeenCalledTimes(1);
     expect(initializeAppMock).toHaveBeenCalledWith(
       expect.objectContaining({
