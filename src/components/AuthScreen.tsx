@@ -18,6 +18,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { PWAInstallButton } from './PWAInstallButton';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
@@ -219,23 +220,26 @@ export const AuthScreen: React.FC = () => {
     <div className="min-h-screen bg-slate-100/80 flex flex-col items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200/90 shadow-lg p-4 sm:p-7 space-y-5">
         {/* Marca */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
-            <Scale className="w-5 h-5 stroke-[2.2]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">
-                Rótulo<span className="text-emerald-600">Fácil</span>
-              </h1>
-              <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                ANVISA
-              </span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+              <Scale className="w-5 h-5 stroke-[2.2]" />
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Acesse sua conta para salvar e gerenciar suas receitas
-            </p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">
+                  Rótulo<span className="text-emerald-600">Fácil</span>
+                </h1>
+                <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  ANVISA
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Acesse sua conta para salvar e gerenciar suas receitas
+              </p>
+            </div>
           </div>
+          <PWAInstallButton />
         </div>
 
         {/* Seletor de Modo */}

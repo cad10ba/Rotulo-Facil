@@ -5,52 +5,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { getFrontalMagnifierDimensions } from '../utils/anvisaRules';
+import { LUPA_SVG_PROPORTIONS, computeLupaLayout } from '../utils/lupaSvg';
 
-/**
- * Proporções geométricas do modelo SVG da Rotulagem Nutricional Frontal (Anexo XVII da IN 75/2020).
- * Todas as medidas estão em unidades proporcionais do viewBox (base altura = 100).
- * // VERIFICAR com o modelo oficial
- */
-export const LUPA_SVG_PROPORTIONS = {
-  // VERIFICAR com o modelo oficial: altura total do selo no viewBox
-  viewBoxHeight: 100,
-  // VERIFICAR com o modelo oficial: espessura da borda externa e raio dos cantos arredondados
-  borderWidth: 3.5,
-  outerCornerRadius: 14,
-  innerCornerRadius: 11,
-  // VERIFICAR com o modelo oficial: largura do bloco branco esquerdo ("Lupa + ALTO EM")
-  altoEmBoxWidth: 112,
-  // VERIFICAR com o modelo oficial: espaçamento (filete branco) entre blocos pretos de nutrientes
-  blockGap: 3.5,
-  // VERIFICAR com o modelo oficial: largura de cada bloco preto de nutriente
-  nutrientBoxWidths: {
-    sugar: 106,
-    satFat: 106,
-    sodium: 78,
-  },
-  // VERIFICAR com o modelo oficial: geometria do ícone da lupa em SVG (lente + cabo)
-  magnifierCx: 27,
-  magnifierCy: 44,
-  magnifierRadius: 13.5,
-  magnifierStrokeWidth: 5.2,
-  magnifierHandleX2: 43.5,
-  magnifierHandleY2: 61.5,
-  // VERIFICAR com o modelo oficial: família tipográfica e tamanhos proporcionais ("ALTO EM" e nutrientes)
-  fontFamily: "'Arial Narrow', 'Nimbus Sans Narrow', Arial, sans-serif",
-  altoEmTextX: 77,
-  altoEmTextY: 50,
-  altoEmFontSize: 22,
-  altoEmLetterSpacing: 0.3,
-  nutrientFontSize: 17.5,
-  nutrientTwoLineOffset: 10.5,
-  nutrientLetterSpacing: 0.2,
-} as const;
-
-interface NutrientBlockDef {
-  key: 'sugar' | 'satFat' | 'sodium';
-  lines: string[];
-  width: number;
-}
+export { LUPA_SVG_PROPORTIONS };
 
 interface FrontalMagnifierProps {
   warnings: {
@@ -111,32 +68,12 @@ export const FrontalMagnifier: React.FC<FrontalMagnifierProps> = ({
 }) => {
   const [customAssetFile, setCustomAssetFile] = useState<string | null>(null);
 
-  const activeBlocks: NutrientBlockDef[] = [];
-  if (warnings.highAddedSugar) {
-    activeBlocks.push({
-      key: 'sugar',
-      lines: ['AÇÚCAR', 'ADICIONADO'],
-      width: LUPA_SVG_PROPORTIONS.nutrientBoxWidths.sugar,
-    });
-  }
-  if (warnings.highSaturatedFat) {
-    activeBlocks.push({
-      key: 'satFat',
-      lines: ['GORDURA', 'SATURADA'],
-      width: LUPA_SVG_PROPORTIONS.nutrientBoxWidths.satFat,
-    });
-  }
-  if (warnings.highSodium) {
-    activeBlocks.push({
-      key: 'sodium',
-      lines: ['SÓDIO'],
-      width: LUPA_SVG_PROPORTIONS.nutrientBoxWidths.sodium,
-    });
-  }
+  const layout = computeLupaLayout(warnings, panelArea);
+  const hasAnyWarning = Boolean(layout);
 
   useEffect(() => {
     let active = true;
-    if (activeBlocks.length === 0) {
+    if (!hasAnyWarning) {
       setCustomAssetFile(null);
       return;
     }
@@ -159,10 +96,10 @@ export const FrontalMagnifier: React.FC<FrontalMagnifierProps> = ({
     warnings.highAddedSugar,
     warnings.highSaturatedFat,
     warnings.highSodium,
-    activeBlocks.length,
+    hasAnyWarning,
   ]);
 
-  if (activeBlocks.length === 0) {
+  if (!layout) {
     return null;
   }
 
@@ -179,7 +116,7 @@ export const FrontalMagnifier: React.FC<FrontalMagnifierProps> = ({
       >
         <img
           src={assetUrl}
-          alt={`Alto em: ${activeBlocks.map((b) => b.lines.join(' ')).join(', ')}`}
+          alt={layout.ariaLabel}
           style={{
             height: `${dims.heightMm}mm`,
             width: 'auto',
@@ -192,38 +129,26 @@ export const FrontalMagnifier: React.FC<FrontalMagnifierProps> = ({
   }
 
   const P = LUPA_SVG_PROPORTIONS;
-  const H = P.viewBoxHeight;
-  const pad = P.borderWidth;
-  const innerH = H - pad * 2;
-  const blocksTotalWidth =
-    activeBlocks.reduce((acc, b) => acc + b.width, 0) +
-    Math.max(0, activeBlocks.length - 1) * P.blockGap;
-  const totalWidth = P.altoEmBoxWidth + blocksTotalWidth + pad;
-  const widthMm = Number(((dims.heightMm * totalWidth) / H).toFixed(2));
-
-  // Posição inicial dos blocos pretos de nutrientes
-  let cursorX = P.altoEmBoxWidth;
-  const ariaLabel = `Alto em ${activeBlocks.map((b) => b.lines.join(' ')).join(', ')}`;
 
   return (
     <svg
       id={svgId}
       xmlns="http://www.w3.org/2000/svg"
-      viewBox={`0 0 ${totalWidth} ${H}`}
-      width={`${widthMm}mm`}
-      height={`${dims.heightMm}mm`}
-      data-width-mm={widthMm}
-      data-height-mm={dims.heightMm}
+      viewBox={`0 0 ${layout.totalWidth} ${layout.height}`}
+      width={`${layout.widthMm}mm`}
+      height={`${layout.heightMm}mm`}
+      data-width-mm={layout.widthMm}
+      data-height-mm={layout.heightMm}
       role="img"
-      aria-label={ariaLabel}
+      aria-label={layout.ariaLabel}
       className="max-w-full h-auto select-none block"
     >
       {/* Fundo branco externo com borda preta oficial */}
       <rect
-        x={pad / 2}
-        y={pad / 2}
-        width={totalWidth - pad}
-        height={H - pad}
+        x={layout.pad / 2}
+        y={layout.pad / 2}
+        width={layout.totalWidth - layout.pad}
+        height={layout.height - layout.pad}
         rx={P.outerCornerRadius}
         ry={P.outerCornerRadius}
         fill="#ffffff"
@@ -231,115 +156,93 @@ export const FrontalMagnifier: React.FC<FrontalMagnifierProps> = ({
         strokeWidth={P.borderWidth}
       />
 
-      {/* Bloco esquerdo: Símbolo da Lupa em SVG + texto "ALTO EM" */}
-      <g>
+      {/* Zona 1 e Zona 2 separadas: Símbolo da Lupa | folga fixa | texto "ALTO EM" */}
+      <g data-lupa-zone="header">
         <circle
-          cx={P.magnifierCx}
-          cy={P.magnifierCy}
-          r={P.magnifierRadius}
+          cx={layout.magnifier.cx}
+          cy={layout.magnifier.cy}
+          r={layout.magnifier.r}
           fill="none"
           stroke="#000000"
-          strokeWidth={P.magnifierStrokeWidth}
+          strokeWidth={layout.magnifier.strokeWidth}
         />
         <line
-          x1={P.magnifierCx + P.magnifierRadius * 0.7}
-          y1={P.magnifierCy + P.magnifierRadius * 0.7}
-          x2={P.magnifierHandleX2}
-          y2={P.magnifierHandleY2}
+          x1={layout.magnifier.handleX1}
+          y1={layout.magnifier.handleY1}
+          x2={layout.magnifier.handleX2}
+          y2={layout.magnifier.handleY2}
           stroke="#000000"
-          strokeWidth={P.magnifierStrokeWidth}
+          strokeWidth={layout.magnifier.strokeWidth}
           strokeLinecap="round"
         />
         <text
-          x={P.altoEmTextX}
-          y={P.altoEmTextY}
+          x={layout.altoEm.x}
+          y={layout.altoEm.y}
           fill="#000000"
           fontFamily={P.fontFamily}
           fontWeight="700"
-          fontSize={P.altoEmFontSize}
+          fontSize={layout.altoEm.fontSize}
           letterSpacing={P.altoEmLetterSpacing}
           textAnchor="middle"
           dominantBaseline="central"
+          textLength={layout.altoEm.textLength}
+          lengthAdjust="spacingAndGlyphs"
         >
           ALTO EM
         </text>
       </g>
 
-      {/* Blocos pretos individuais para cada nutriente (texto branco centralizado) */}
-      {activeBlocks.map((block, index) => {
-        const blockX = cursorX;
-        cursorX += block.width + P.blockGap;
-        const isLast = index === activeBlocks.length - 1;
-        const blockCenterX = blockX + block.width / 2;
-        const centerY = H / 2;
-
-        return (
-          <g key={block.key}>
+      {/* Zona 3: Blocos pretos individuais para cada nutriente */}
+      {layout.blocks.map((block) => (
+        <g key={block.key} data-lupa-block={block.key}>
+          <rect
+            x={block.x}
+            y={block.y}
+            width={block.width}
+            height={block.height}
+            rx={block.isLast ? P.innerCornerRadius : 2}
+            ry={block.isLast ? P.innerCornerRadius : 2}
+            fill="#000000"
+          />
+          {!block.isLast && (
             <rect
-              x={blockX}
-              y={pad}
-              width={block.width}
-              height={innerH}
-              rx={isLast ? P.innerCornerRadius : 2}
-              ry={isLast ? P.innerCornerRadius : 2}
+              x={block.x}
+              y={block.y}
+              width={Math.min(12, block.width / 3)}
+              height={block.height}
               fill="#000000"
             />
-            {!isLast && (
-              <rect
-                x={blockX}
-                y={pad}
-                width={Math.min(12, block.width / 3)}
-                height={innerH}
-                fill="#000000"
-              />
-            )}
-            {isLast && activeBlocks.length > 1 && (
-              <rect
-                x={blockX}
-                y={pad}
-                width={P.innerCornerRadius}
-                height={innerH}
-                fill="#000000"
-              />
-            )}
+          )}
+          {block.isLast && layout.blocks.length > 1 && (
+            <rect
+              x={block.x}
+              y={block.y}
+              width={P.innerCornerRadius}
+              height={block.height}
+              fill="#000000"
+            />
+          )}
 
-            {block.lines.length === 1 ? (
-              <text
-                x={blockCenterX}
-                y={centerY}
-                fill="#ffffff"
-                fontFamily={P.fontFamily}
-                fontWeight="700"
-                fontSize={P.nutrientFontSize}
-                letterSpacing={P.nutrientLetterSpacing}
-                textAnchor="middle"
-                dominantBaseline="central"
-              >
-                {block.lines[0]}
-              </text>
-            ) : (
-              <text
-                x={blockCenterX}
-                y={centerY}
-                fill="#ffffff"
-                fontFamily={P.fontFamily}
-                fontWeight="700"
-                fontSize={P.nutrientFontSize}
-                letterSpacing={P.nutrientLetterSpacing}
-                textAnchor="middle"
-                dominantBaseline="central"
-              >
-                <tspan x={blockCenterX} dy={-P.nutrientTwoLineOffset}>
-                  {block.lines[0]}
-                </tspan>
-                <tspan x={blockCenterX} dy={P.nutrientTwoLineOffset * 2}>
-                  {block.lines[1]}
-                </tspan>
-              </text>
-            )}
-          </g>
-        );
-      })}
+          {block.lines.map((line) => (
+            <text
+              key={line.text}
+              x={line.x}
+              y={line.y}
+              fill="#ffffff"
+              fontFamily={P.fontFamily}
+              fontWeight="700"
+              fontSize={line.fontSize}
+              letterSpacing={P.nutrientLetterSpacing}
+              textAnchor="middle"
+              dominantBaseline="central"
+              textLength={line.textLength}
+              lengthAdjust="spacingAndGlyphs"
+            >
+              {line.text}
+            </text>
+          ))}
+        </g>
+      ))}
     </svg>
   );
 };

@@ -40,6 +40,7 @@ import { deleteUser } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthScreen } from './components/AuthScreen';
+import { PWAInstallButton } from './components/PWAInstallButton';
 
 const STORAGE_KEY = 'rotulofacil_recipes_v1';
 const CURRENT_RECIPE_KEY = 'rotulofacil_current_recipe_id';
@@ -691,8 +692,8 @@ function AuthenticatedApp() {
       )}
 
       {/* Header Superior Principal */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-4 py-2.5 sm:py-3 shadow-2xs">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 min-w-0">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-4 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 sm:pt-3 sm:pb-3 shadow-2xs">
+        <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
               <Scale className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
@@ -702,7 +703,7 @@ function AuthenticatedApp() {
                 <h1 className="text-sm sm:text-lg font-black tracking-tight text-slate-900 leading-none truncate">
                   Rótulo<span className="text-emerald-600">Fácil</span>
                 </h1>
-                <span className="text-[9px] sm:text-[10px] font-black uppercase px-1 sm:px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                <span className="hidden min-[360px]:inline-block text-[9px] sm:text-[10px] font-black uppercase px-1 sm:px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                   ANVISA
                 </span>
               </div>
@@ -712,7 +713,9 @@ function AuthenticatedApp() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 shrink-0">
+            <PWAInstallButton />
+
             <button
               type="button"
               onClick={() => setIsGuideModalOpen(true)}
@@ -808,7 +811,7 @@ function AuthenticatedApp() {
       {/* Navegação Inferior Fixa para Mobile (< 640px) */}
       <nav
         aria-label="Navegação principal"
-        className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-1.5 py-1.5 shadow-[0_-4px_14px_rgba(15,23,42,0.08)]"
+        className="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-1.5 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] shadow-[0_-4px_14px_rgba(15,23,42,0.08)]"
       >
         <div className="grid grid-cols-4 gap-1 max-w-md mx-auto">
           {[
@@ -1354,7 +1357,7 @@ function AuthenticatedApp() {
       </main>
 
       {/* Rodapé de Privacidade e Direitos LGPD */}
-      <footer className="border-t border-slate-200/80 bg-white/80 px-3 sm:px-4 pt-4 pb-24 sm:pb-4">
+      <footer className="border-t border-slate-200/80 bg-white/80 px-3 sm:px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-4">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
           <div className="text-center sm:text-left min-w-0">
             <span className="font-semibold text-slate-800">Privacidade e Dados (LGPD):</span>{' '}

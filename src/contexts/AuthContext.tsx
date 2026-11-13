@@ -187,6 +187,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    try {
+      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+        const message = { type: 'CLEAR_NAV_CACHE' };
+        navigator.serviceWorker.controller?.postMessage(message);
+        const registration = await navigator.serviceWorker.getRegistration();
+        registration?.active?.postMessage(message);
+      }
+    } catch {
+      // Silencioso caso o Service Worker não esteja ativo
+    }
     await signOut(auth);
   };
 

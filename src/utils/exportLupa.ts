@@ -6,58 +6,85 @@
 import jsPDF from 'jspdf';
 import { Recipe } from '../types/nutrition';
 import { getFrontalMagnifierDimensions } from './anvisaRules';
+import { calculateRecipeNutrition } from './nutritionCalculator';
+import { buildLupaSvgString, computeLupaLayout } from './lupaSvg';
 
 function buildSafeFilename(name: string): string {
   return name.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'rotulo_nutricional';
 }
 
-async function resolveLupaSvgMarkup(containerOrSvgId: string): Promise<{
+async function resolveLupaSvgMarkup(
+  recipe: Recipe,
+  containerOrSvgId: string
+): Promise<{
   svgText: string | null;
   assetUrl: string | null;
   widthMm: number;
   heightMm: number;
 }> {
-  const el = document.getElementById(containerOrSvgId);
-  if (!el) {
-    return { svgText: null, assetUrl: null, widthMm: 50, heightMm: 12 };
-  }
+  const el =
+    typeof document !== 'undefined' ? document.getElementById(containerOrSvgId) : null;
 
-  const svgEl =
-    el.tagName.toLowerCase() === 'svg'
-      ? (el as unknown as SVGSVGElement)
-      : (el.querySelector('svg') as SVGSVGElement | null);
+  if (el) {
+    const svgEl =
+      el.tagName.toLowerCase() === 'svg'
+        ? (el as unknown as SVGSVGElement)
+        : (el.querySelector('svg') as SVGSVGElement | null);
 
-  if (svgEl) {
-    const serializer = new XMLSerializer();
-    let svgText = serializer.serializeToString(svgEl);
-    if (!svgText.includes('xmlns="http://www.w3.org/2000/svg"')) {
-      svgText = svgText.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+    if (svgEl) {
+      const serializer = new XMLSerializer();
+      let svgText = serializer.serializeToString(svgEl);
+      if (!svgText.includes('xmlns="http://www.w3.org/2000/svg"')) {
+        svgText = svgText.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      const widthMm = Number(svgEl.getAttribute('data-width-mm')) || 50;
+      const heightMm = Number(svgEl.getAttribute('data-height-mm')) || 12;
+      return { svgText, assetUrl: null, widthMm, heightMm };
     }
-    const widthMm = Number(svgEl.getAttribute('data-width-mm')) || 50;
-    const heightMm = Number(svgEl.getAttribute('data-height-mm')) || 12;
-    return { svgText, assetUrl: null, widthMm, heightMm };
-  }
 
-  const assetHost = el.closest('[data-lupa-asset-url]') || el.querySelector('[data-lupa-asset-url]');
-  const assetUrl = assetHost?.getAttribute('data-lupa-asset-url') || null;
-  const heightMm = Number(assetHost?.getAttribute('data-lupa-height-mm')) || 12;
+    const assetHost =
+      el.closest('[data-lupa-asset-url]') || el.querySelector('[data-lupa-asset-url]');
+    const assetUrl = assetHost?.getAttribute('data-lupa-asset-url') || null;
+    const heightMm = Number(assetHost?.getAttribute('data-lupa-height-mm')) || 12;
 
-  if (assetUrl && assetUrl.toLowerCase().endsWith('.svg')) {
-    const res = await fetch(assetUrl);
-    if (res.ok) {
-      const svgText = await res.text();
-      return { svgText, assetUrl, widthMm: heightMm * 3, heightMm };
+    if (assetUrl && assetUrl.toLowerCase().endsWith('.svg')) {
+      const res = await fetch(assetUrl);
+      if (res.ok) {
+        const svgText = await res.text();
+        return { svgText, assetUrl, widthMm: heightMm * 3, heightMm };
+      }
+    }
+
+    if (assetUrl) {
+      return { svgText: null, assetUrl, widthMm: heightMm * 3, heightMm };
     }
   }
 
-  return { svgText: null, assetUrl, widthMm: heightMm * 3, heightMm };
+  // Fallback programático usando a mesma geometria sem sobreposição
+  const nutrition = calculateRecipeNutrition(recipe);
+  const layout = computeLupaLayout(nutrition.frontalWarnings, recipe.panelArea);
+  const svgText = buildLupaSvgString(
+    nutrition.frontalWarnings,
+    recipe.panelArea,
+    containerOrSvgId
+  );
+  if (svgText && layout) {
+    return {
+      svgText,
+      assetUrl: null,
+      widthMm: layout.widthMm,
+      heightMm: layout.heightMm,
+    };
+  }
+
+  return { svgText: null, assetUrl: null, widthMm: 50, heightMm: 12 };
 }
 
 export async function exportLupaAsSvg(
   recipe: Recipe,
   svgOrContainerId = 'anvisa-frontal-magnifier-svg'
 ): Promise<boolean> {
-  const { svgText, assetUrl } = await resolveLupaSvgMarkup(svgOrContainerId);
+  const { svgText, assetUrl } = await resolveLupaSvgMarkup(recipe, svgOrContainerId);
   const safeName = buildSafeFilename(recipe.name);
 
   if (svgText) {
@@ -96,7 +123,10 @@ export async function exportLupaAsPdf(
   recipe: Recipe,
   svgOrContainerId = 'anvisa-frontal-magnifier-svg'
 ): Promise<boolean> {
-  const { svgText, assetUrl, widthMm, heightMm } = await resolveLupaSvgMarkup(svgOrContainerId);
+  const { svgText, assetUrl, widthMm, heightMm } = await resolveLupaSvgMarkup(
+    recipe,
+    svgOrContainerId
+  );
   if (!svgText && !assetUrl) return false;
 
   const dims = getFrontalMagnifierDimensions(recipe.panelArea);
@@ -113,12 +143,15 @@ export async function exportLupaAsPdf(
 
   try {
     const img = await loadImage(imageSourceUrl);
-    const naturalRatio = img.naturalWidth > 0 && img.naturalHeight > 0
-      ? img.naturalWidth / img.naturalHeight
-      : widthMm / heightMm;
+    const naturalRatio =
+      img.naturalWidth > 0 && img.naturalHeight > 0
+        ? img.naturalWidth / img.naturalHeight
+        : widthMm / heightMm;
 
     const targetHeightMm = dims.heightMm;
-    const targetWidthMm = svgText ? widthMm : Number((targetHeightMm * naturalRatio).toFixed(2));
+    const targetWidthMm = svgText
+      ? widthMm
+      : Number((targetHeightMm * naturalRatio).toFixed(2));
 
     // Renderiza em alta resolução (~600 DPI equivalente em escala proporcional) para impressão nítida
     const pxPerMm = 24;
