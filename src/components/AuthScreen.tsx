@@ -5,7 +5,6 @@
 
 import React, { useState } from 'react';
 import {
-  Scale,
   Mail,
   Lock,
   User as UserIcon,
@@ -19,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { PWAInstallButton } from './PWAInstallButton';
+import { AppLogo } from './AppLogo';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
@@ -222,9 +222,7 @@ export const AuthScreen: React.FC = () => {
         {/* Marca */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
-              <Scale className="w-5 h-5 stroke-[2.2]" />
-            </div>
+            <AppLogo size={40} className="w-10 h-10 shrink-0 shadow-xs rounded-[22%]" />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">

@@ -6,7 +6,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ChefHat,
-  Scale,
   FileText,
   History,
   Download,
@@ -41,6 +40,7 @@ import { auth } from './lib/firebase';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthScreen } from './components/AuthScreen';
 import { PWAInstallButton } from './components/PWAInstallButton';
+import { AppLogo } from './components/AppLogo';
 
 const STORAGE_KEY = 'rotulofacil_recipes_v1';
 const CURRENT_RECIPE_KEY = 'rotulofacil_current_recipe_id';
@@ -695,9 +695,7 @@ function AuthenticatedApp() {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-4 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 sm:pt-3 sm:pb-3 shadow-2xs">
         <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2 min-w-0">
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
-              <Scale className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
-            </div>
+            <AppLogo className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 shadow-xs rounded-[22%]" />
             <div className="min-w-0">
               <div className="flex items-center gap-1 min-w-0">
                 <h1 className="text-sm sm:text-lg font-black tracking-tight text-slate-900 leading-none truncate">

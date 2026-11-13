@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `rotulofacil-static-${CACHE_VERSION}`;
 const NAV_CACHE = `rotulofacil-nav-${CACHE_VERSION}`;
 const VALID_CACHES = new Set([STATIC_CACHE, NAV_CACHE]);
