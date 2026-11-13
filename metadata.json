@@ -1,0 +1,6 @@
+{
+  "name": "RótuloFácil - Gerador de Rótulos Nutricionais ANVISA",
+  "description": "Aplicativo web mobile-first para cálculo de receitas baseado na Tabela TACO/UNICAMP e geração de tabelas nutricionais oficiais no padrão ANVISA (RDC 429/2020 e IN 75/2020) com exportação em PNG e PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
