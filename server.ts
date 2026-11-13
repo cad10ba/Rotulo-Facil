@@ -8,7 +8,7 @@ import compression from 'compression';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { GoogleGenAI, Type } from '@google/genai';
 import { requireAuth, type AuthRequest } from './src/middleware/auth.ts';
-import { adminAuth } from './src/lib/firebase-admin.ts';
+import { adminAuth, hasAdminCredentials } from './src/lib/firebase-admin.ts';
 import {
   isBrevoConfigured,
   sendConfirmationEmailViaBrevo,
@@ -50,6 +50,37 @@ app.use(
 );
 app.use(compression());
 app.use(express.json({ limit: '1mb' }));
+
+let serverReadyPromise: Promise<void> | null = null;
+
+async function ensureServerReady(): Promise<void> {
+  if (!serverReadyPromise) {
+    serverReadyPromise = (async () => {
+      assertEncryptionConfigured();
+      await verifyDatabaseRlsRole();
+      console.log('Banco Supabase conectado com RLS ativo');
+    })().catch((err) => {
+      serverReadyPromise = null;
+      throw err;
+    });
+  }
+  return serverReadyPromise;
+}
+
+app.use('/api', async (_req, res, next) => {
+  try {
+    await ensureServerReady();
+    return next();
+  } catch (err) {
+    console.error(
+      'Falha na verificação de inicialização do servidor:',
+      err instanceof Error ? err.message : 'Erro desconhecido'
+    );
+    return res.status(503).json({
+      error: 'Serviço temporariamente indisponível. Tente novamente em instantes.',
+    });
+  }
+});
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -136,7 +167,7 @@ async function verifyBearerForEmailVerification(
 
   try {
     const token = authHeader.split('Bearer ')[1];
-    const decoded = await adminAuth.verifyIdToken(token, true);
+    const decoded = await adminAuth.verifyIdToken(token, hasAdminCredentials());
     if (!decoded.email) {
       return res.status(400).json({ error: 'E-mail não encontrado na conta.' });
     }
@@ -164,6 +195,8 @@ app.get('/api/taco/search', requireAuth, (req, res) => {
 // Lista arquivos oficiais opcionais adicionados pelo usuário em public/lupa/
 app.get('/api/lupa/assets', (_req, res) => {
   const candidates = [
+    path.resolve(process.cwd(), 'public', 'lupa'),
+    path.resolve(process.cwd(), 'dist', 'lupa'),
     path.resolve(__dirname, 'public', 'lupa'),
     path.resolve(__dirname, 'dist', 'lupa'),
   ];
@@ -308,6 +341,10 @@ app.post(
   sendVerificationEmailLimiter,
   async (req: AuthRequest, res) => {
     try {
+      if (!hasAdminCredentials()) {
+        return res.status(200).json({ useClientFallback: true });
+      }
+
       const decoded = req.user!;
       const email = decoded.email!;
 
@@ -359,6 +396,10 @@ app.post(
   forgotPasswordIpLimiter,
   forgotPasswordEmailLimiter,
   async (req, res) => {
+    if (!hasAdminCredentials()) {
+      return res.status(200).json({ useClientFallback: true });
+    }
+
     const rawEmail = req.body?.email;
     const cleanEmail = typeof rawEmail === 'string' ? rawEmail.trim().toLowerCase() : '';
 
@@ -497,8 +538,11 @@ app.delete('/api/account', requireAuth, async (req: AuthRequest, res) => {
   try {
     const uid = req.user!.uid;
     await deleteUserAccountData(uid);
-    await adminAuth.deleteUser(uid);
-    return res.json({ deleted: true });
+    if (hasAdminCredentials()) {
+      await adminAuth.deleteUser(uid);
+      return res.json({ deleted: true });
+    }
+    return res.json({ deleted: true, deleteAuthOnClient: true });
   } catch (error) {
     console.error(
       'Erro ao excluir conta do usuário:',
@@ -529,30 +573,22 @@ const PORT = Number(process.env.PORT) || 3000;
 
 async function startServer() {
   try {
-    assertEncryptionConfigured();
+    await ensureServerReady();
   } catch (err) {
     console.error(
-      'Erro fatal na configuração de criptografia:',
-      err instanceof Error ? err.message : 'DATA_ENCRYPTION_KEY inválida.'
-    );
-    process.exit(1);
-  }
-
-  try {
-    await verifyDatabaseRlsRole();
-    console.log('Banco Supabase conectado com RLS ativo');
-  } catch (err) {
-    console.error(
-      'Erro fatal de segurança no banco de dados:',
-      err instanceof Error ? err.message : 'Usuário de banco inválido para RLS.'
+      'Erro fatal na inicialização do servidor:',
+      err instanceof Error ? err.message : 'Falha na configuração de criptografia ou RLS.'
     );
     process.exit(1);
   }
 
   if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+    const distDir = fs.existsSync(path.resolve(process.cwd(), 'dist'))
+      ? path.resolve(process.cwd(), 'dist')
+      : path.resolve(__dirname, 'dist');
+    app.use(express.static(distDir));
     app.get('*', (_req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.resolve(distDir, 'index.html'));
     });
   } else {
     const { createServer: createViteServer } = await import('vite');
@@ -568,4 +604,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;

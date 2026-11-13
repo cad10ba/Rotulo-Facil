@@ -20,11 +20,11 @@ declare global {
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 function resolveSupabaseCaPath(): string {
-  const fromModule = path.resolve(PROJECT_ROOT, 'certs', 'supabase-prod-ca-2021.crt');
-  if (fs.existsSync(fromModule)) {
-    return fromModule;
+  const fromCwd = path.resolve(process.cwd(), 'certs', 'supabase-prod-ca-2021.crt');
+  if (fs.existsSync(fromCwd)) {
+    return fromCwd;
   }
-  return path.resolve(process.cwd(), 'certs', 'supabase-prod-ca-2021.crt');
+  return path.resolve(PROJECT_ROOT, 'certs', 'supabase-prod-ca-2021.crt');
 }
 
 function resolveSslConfig(): { ca?: string | string[]; rejectUnauthorized: boolean } {
@@ -60,7 +60,7 @@ function getPool(): Pool {
       user: process.env.SUPABASE_DB_USER,
       password: process.env.SUPABASE_DB_PASSWORD,
       database: process.env.SUPABASE_DB_NAME,
-      max: 10,
+      max: process.env.VERCEL ? 3 : 10,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 15000,
       ssl: resolveSslConfig(),

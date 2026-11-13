@@ -33,6 +33,8 @@ import { FrontalMagnifier } from './components/FrontalMagnifier';
 import { HistoryList } from './components/HistoryList';
 import { ExportModal, EXPORT_RESPONSIBILITY_TERM } from './components/ExportModal';
 import { AnvisaGuideModal } from './components/AnvisaGuideModal';
+import { deleteUser } from 'firebase/auth';
+import { auth } from './lib/firebase';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthScreen } from './components/AuthScreen';
 
@@ -518,6 +520,19 @@ function AuthenticatedApp() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw new Error(data.error || 'Não foi possível excluir sua conta.');
+      }
+      if (data.deleteAuthOnClient && auth.currentUser) {
+        try {
+          await deleteUser(auth.currentUser);
+        } catch (authErr: any) {
+          if (authErr?.code === 'auth/requires-recent-login') {
+            setIsDeleteAccountModalOpen(false);
+            setDeleteAccountConfirmText('');
+            showError('Por segurança, entre novamente para concluir a exclusão');
+            return;
+          }
+          throw authErr;
+        }
       }
       if (user?.uid) {
         try {

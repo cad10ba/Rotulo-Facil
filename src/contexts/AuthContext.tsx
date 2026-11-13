@@ -11,6 +11,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signOut,
 } from 'firebase/auth';
 import { auth, googleAuthProvider } from '../lib/firebase';
@@ -95,6 +97,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
+    if (data.useClientFallback) {
+      try {
+        await sendEmailVerification(credential.user, { url: window.location.origin });
+        return { verificationSent: true };
+      } catch {
+        return {
+          verificationSent: false,
+          warning:
+            'Conta criada, mas não foi possível enviar o link de confirmação no momento.',
+        };
+      }
+    }
+
     return { verificationSent: Boolean(data.sent) };
   };
 
@@ -115,6 +130,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (!res.ok) {
       throw new Error(data.error || 'Erro ao reenviar e-mail de confirmação via Brevo.');
+    }
+
+    if (data.useClientFallback) {
+      if (!auth.currentUser) {
+        throw new Error('Sessão expirada. Entre novamente.');
+      }
+      await sendEmailVerification(auth.currentUser, { url: window.location.origin });
+      return {
+        sent: true,
+        message: `Link de confirmação reenviado para ${auth.currentUser.email || user?.email}.`,
+      };
     }
 
     if (data.alreadyVerified) {
@@ -140,14 +166,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const requestPasswordReset = async (email: string): Promise<string> => {
+    const cleanEmail = email.trim();
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim() }),
+      body: JSON.stringify({ email: cleanEmail }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       throw new Error(data.error || 'Não foi possível enviar o e-mail de redefinição via Brevo.');
+    }
+    if (data.useClientFallback) {
+      await sendPasswordResetEmail(auth, cleanEmail, { url: window.location.origin });
+      return 'Se existir uma conta para este e-mail, enviamos o link de redefinição de senha.';
     }
     return (
       data.message ||

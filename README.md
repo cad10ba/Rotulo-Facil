@@ -79,3 +79,27 @@ Os arquivos oficiais ficam na pasta `data/` na raiz do projeto e são carregados
 Para atualizar os dados:
 1. Substitua `data/taco.csv` e/ou `data/taco_acidos_graxos.csv` mantendo a codificação UTF-8 e a estrutura original de colunas e marcadores (`Tr`, `NA`, `*`).
 2. Reinicie o servidor (`npm run dev` ou `npm start`) para recarregar o índice de busca em memória (`fuse.js`).
+
+---
+
+## Deploy na Vercel
+
+O projeto já inclui `vercel.json` e `api/index.ts` para servir o frontend estático (`dist/`) e executar o backend Express como função serverless (`/api/*`).
+
+1. **Configure as variáveis de ambiente na Vercel (Project Settings → Environment Variables):**
+   - `SUPABASE_DB_HOST`
+   - `SUPABASE_DB_PORT` (use **`6543`** na Vercel, porta do pooler em modo transação do Supabase)
+   - `SUPABASE_DB_USER`
+   - `SUPABASE_DB_PASSWORD`
+   - `SUPABASE_DB_NAME`
+   - `DATA_ENCRYPTION_KEY`
+   - `DATA_ENCRYPTION_KEY_VERSION`
+   - `GEMINI_API_KEY`
+   - `BREVO_API_KEY`
+   - `BREVO_SENDER_EMAIL`
+   - `APP_URL`
+   - `FIREBASE_SERVICE_ACCOUNT` *(opcional)* — sem ela (ou `FIREBASE_SERVICE_ACCOUNT_BASE64`), os e-mails de confirmação de cadastro e redefinição de senha saem pelos modelos do próprio Firebase (**Authentication > Modelos**) em vez do Brevo, e a exclusão da conta no Firebase Authentication é feita diretamente pelo navegador.
+
+2. **Autorize o domínio da Vercel no Firebase:**
+   No console do Firebase, acesse **Authentication → Settings → Authorized domains** e adicione o domínio gerado pela Vercel (ex.: `seu-app.vercel.app`) e seu domínio próprio, caso utilize.
+

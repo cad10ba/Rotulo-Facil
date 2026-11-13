@@ -5,6 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import Fuse from 'fuse.js';
 
 export interface TacoServerItem {
@@ -114,14 +115,25 @@ function buildColumnIndexMap(headerRow: string[]): Record<string, number> {
   return map;
 }
 
-function loadTacoDatabase(): {
+const MODULE_PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+function resolveDataFilePath(fileName: string): string {
+  const fromCwd = path.resolve(process.cwd(), 'data', fileName);
+  if (fs.existsSync(fromCwd)) {
+    return fromCwd;
+  }
+  return path.resolve(MODULE_PROJECT_ROOT, 'data', fileName);
+}
+
+interface TacoStore {
   items: TacoServerItem[];
   byId: Map<string, TacoServerItem>;
   fuse: Fuse<IndexedTacoItem>;
-} {
-  const dataDir = path.resolve(process.cwd(), 'data');
-  const tacoCsvPath = path.join(dataDir, 'taco.csv');
-  const acidosGraxosCsvPath = path.join(dataDir, 'taco_acidos_graxos.csv');
+}
+
+function loadTacoDatabase(): TacoStore {
+  const tacoCsvPath = resolveDataFilePath('taco.csv');
+  const acidosGraxosCsvPath = resolveDataFilePath('taco_acidos_graxos.csv');
 
   const tacoRaw = fs.readFileSync(tacoCsvPath, 'utf-8');
   const agRaw = fs.readFileSync(acidosGraxosCsvPath, 'utf-8');
@@ -197,20 +209,27 @@ function loadTacoDatabase(): {
   return { items, byId, fuse };
 }
 
-const tacoStore = loadTacoDatabase();
+let cachedTacoStore: TacoStore | null = null;
+
+function getTacoStore(): TacoStore {
+  if (!cachedTacoStore) {
+    cachedTacoStore = loadTacoDatabase();
+  }
+  return cachedTacoStore;
+}
 
 export function getTacoCount(): number {
-  return tacoStore.items.length;
+  return getTacoStore().items.length;
 }
 
 export function getTacoItemById(tacoId: string): TacoServerItem | undefined {
-  return tacoStore.byId.get(String(tacoId).trim());
+  return getTacoStore().byId.get(String(tacoId).trim());
 }
 
 export function searchTacoItems(query: string, limit = 10): TacoServerItem[] {
   const normalizedQuery = normalizeTacoText(query);
   if (!normalizedQuery) return [];
 
-  const results = tacoStore.fuse.search(normalizedQuery, { limit });
+  const results = getTacoStore().fuse.search(normalizedQuery, { limit });
   return results.map((r) => r.item.item);
 }

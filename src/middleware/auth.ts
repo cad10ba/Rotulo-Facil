@@ -5,7 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { DecodedIdToken } from 'firebase-admin/auth';
-import { adminAuth } from '../lib/firebase-admin.ts';
+import { adminAuth, hasAdminCredentials } from '../lib/firebase-admin.ts';
 import { ensureUser } from '../db/users.ts';
 
 export interface AuthRequest extends Request {
@@ -24,7 +24,7 @@ export const requireAuth = async (
 
   const token = authHeader.split('Bearer ')[1];
   try {
-    const decodedToken = await adminAuth.verifyIdToken(token, true);
+    const decodedToken = await adminAuth.verifyIdToken(token, hasAdminCredentials());
 
     // Exige confirmação de e-mail para provedores por senha (Google já vem com email_verified = true)
     const signInProvider = decodedToken.firebase?.sign_in_provider;
