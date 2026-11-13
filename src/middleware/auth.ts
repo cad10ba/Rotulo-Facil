@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { DecodedIdToken } from 'firebase-admin/auth';
+import type { Request, Response, NextFunction } from 'express';
+import type { DecodedIdToken } from 'firebase-admin/auth';
 import { adminAuth, hasAdminCredentials } from '../lib/firebase-admin.ts';
 import { ensureUser } from '../db/users.ts';
 
