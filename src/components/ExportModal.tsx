@@ -19,6 +19,7 @@ import { toBlob } from 'html-to-image';
 import { Recipe, CalculatedNutrition, LabelFormat } from '../types/nutrition';
 import { NutritionLabel } from './NutritionLabel';
 import { FrontalMagnifier } from './FrontalMagnifier';
+import { FitToWidth } from './FitToWidth';
 import { exportLupaAsPdf, exportLupaAsSvg } from '../utils/exportLupa';
 import {
   buildLabelVectorPlan,
@@ -188,30 +189,31 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-3xl w-full border border-slate-200 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6">
+      <div className="bg-white rounded-2xl max-w-3xl w-full border border-slate-200 shadow-2xl overflow-hidden max-h-[calc(100vh-24px)] sm:max-h-[92vh] flex flex-col">
         {/* Cabeçalho do Modal */}
-        <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">
+        <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-slate-200 flex items-center justify-between gap-2 bg-slate-50">
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 break-words">
               Exportar Rótulo Nutricional ANVISA
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 break-words">
               {recipe.name || 'Receita sem título'} • Padrão vetorial para gráfica (mm / 600 DPI)
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Corpo com Configurações e Preview */}
-        <div className="p-5 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="p-4 sm:p-5 overflow-y-auto overflow-x-hidden flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-6">
           {/* Opções de Ajuste do Rótulo */}
-          <div className="md:col-span-5 space-y-4">
+          <div className="md:col-span-5 min-w-0 space-y-4">
             <div>
               <label className="text-xs font-bold uppercase text-slate-600 block mb-2">
                 Formato Oficial ANVISA
@@ -354,9 +356,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 type="button"
                 disabled={isExporting || isExportBlocked}
                 onClick={handleExportPdfSingle}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-2.5 px-3 sm:px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 text-center leading-tight shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                <FileText className="w-4 h-4" />
+                <FileText className="w-4 h-4 shrink-0" />
                 <span>PDF Vetorial 1:1 ({vectorPreviewMetrics.widthMm}×{vectorPreviewMetrics.heightMm} mm)</span>
               </button>
 
@@ -364,9 +366,9 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 type="button"
                 disabled={isExporting || isExportBlocked}
                 onClick={handleExportPdfA4Sheet}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-2.5 px-3 sm:px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-2 text-center leading-tight shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                <Scissors className="w-4 h-4" />
+                <Scissors className="w-4 h-4 shrink-0" />
                 <span>
                   PDF Folha A4 com Marcas de Corte ({vectorPreviewMetrics.a4Count} por folha)
                 </span>
@@ -470,29 +472,33 @@ export const ExportModal: React.FC<ExportModalProps> = ({
           </div>
 
           {/* Área de Visualização Fiel */}
-          <div className="md:col-span-7 bg-slate-100/80 p-4 rounded-2xl flex flex-col items-center justify-center gap-4 border border-slate-200/80 overflow-x-auto min-h-[360px]">
+          <div className="md:col-span-7 min-w-0 bg-slate-100/80 p-3 sm:p-4 rounded-2xl flex flex-col items-center justify-center gap-4 border border-slate-200/80 min-h-[260px] sm:min-h-[360px]">
             {hasLupa && (
-              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center gap-1.5 max-w-full">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col items-center gap-1.5 w-full min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 text-center">
                   Painel Frontal (separado da tabela)
                 </span>
-                <FrontalMagnifier
-                  warnings={nutrition.frontalWarnings}
-                  panelArea={recipe.panelArea}
-                  svgId="export-modal-frontal-magnifier-svg"
-                />
+                <FitToWidth>
+                  <FrontalMagnifier
+                    warnings={nutrition.frontalWarnings}
+                    panelArea={recipe.panelArea}
+                    svgId="export-modal-frontal-magnifier-svg"
+                  />
+                </FitToWidth>
               </div>
             )}
 
-            <div className="shadow-lg transform scale-95 sm:scale-100 transition origin-top">
-              <NutritionLabel
-                recipe={recipe}
-                nutrition={nutrition}
-                format={format}
-                showIngredients={showIngredients}
-                showAllergens={showAllergens}
-              />
-            </div>
+            <FitToWidth className="py-1">
+              <div className="shadow-lg inline-block">
+                <NutritionLabel
+                  recipe={recipe}
+                  nutrition={nutrition}
+                  format={format}
+                  showIngredients={showIngredients}
+                  showAllergens={showAllergens}
+                />
+              </div>
+            </FitToWidth>
           </div>
         </div>
       </div>

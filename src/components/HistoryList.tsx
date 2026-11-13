@@ -19,7 +19,7 @@ import { Recipe } from '../types/nutrition';
 
 interface HistoryListProps {
   recipes: Recipe[];
-  currentRecipeId: string;
+  currentRecipeId: string | null;
   onSelectRecipe: (recipe: Recipe) => void;
   onDuplicateRecipe: (recipe: Recipe) => void;
   onDeleteRecipe: (id: string) => void;
@@ -58,11 +58,11 @@ export const HistoryList: React.FC<HistoryListProps> = ({
   }, [recipes, normalizedQuery]);
 
   return (
-    <div className="space-y-5 pb-12">
+    <div className="space-y-5 pb-4 sm:pb-8">
       {/* Barra de Busca e Ação de Nova Receita */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs space-y-2.5">
-        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-          <div className="relative w-full sm:max-w-md">
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-3.5 sm:p-4 shadow-xs space-y-2.5">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div className="relative w-full sm:max-w-md min-w-0">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
@@ -84,23 +84,23 @@ export const HistoryList: React.FC<HistoryListProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={onRestoreSamples}
-              className="py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 transition whitespace-nowrap cursor-pointer"
+              className="flex-1 sm:flex-none py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1.5 transition text-center cursor-pointer"
               title="Recarregar exemplos oficiais da confeitaria e culinária brasileira"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-3.5 h-3.5 shrink-0" />
               <span>Restaurar Exemplos</span>
             </button>
 
             <button
               type="button"
               onClick={onNewRecipe}
-              className="flex-1 sm:flex-none py-2 px-3.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 shadow-xs transition whitespace-nowrap cursor-pointer"
+              className="flex-1 sm:flex-none py-2 px-3.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 shadow-xs transition text-center cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>Criar Nova Receita</span>
             </button>
           </div>
@@ -119,15 +119,15 @@ export const HistoryList: React.FC<HistoryListProps> = ({
 
       {/* Lista de Receitas */}
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-10 text-center shadow-xs">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-10 text-center shadow-xs">
           <Utensils className="w-12 h-12 text-slate-300 mx-auto mb-3" />
           <h3 className="text-base font-bold text-slate-800">Nenhuma receita encontrada</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto break-words">
             {searchTerm
               ? `Nenhuma receita corresponde a "${searchTerm}". Tente outro termo ou limpe a busca.`
               : 'Seu histórico está vazio. Crie sua primeira receita ou carregue os exemplos da ANVISA.'}
           </p>
-          <div className="mt-5 flex justify-center gap-3">
+          <div className="mt-5 flex flex-col sm:flex-row justify-center gap-2.5 sm:gap-3">
             {searchTerm ? (
               <button
                 type="button"
@@ -172,18 +172,18 @@ export const HistoryList: React.FC<HistoryListProps> = ({
             return (
               <div
                 key={item.id}
-                className={`bg-white rounded-2xl border p-4.5 transition flex flex-col justify-between shadow-xs ${
+                className={`bg-white rounded-2xl border p-4 transition flex flex-col justify-between shadow-xs min-w-0 ${
                   isCurrent
                     ? 'border-emerald-600 ring-2 ring-emerald-100'
                     : 'border-slate-200/80 hover:border-slate-300'
                 }`}
               >
-                <div>
-                  <div className="flex items-start justify-between gap-2 mb-1.5">
-                    <h3 className="font-bold text-slate-900 text-sm leading-snug line-clamp-1">
+                <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-2 mb-1.5 min-w-0">
+                    <h3 className="font-bold text-slate-900 text-sm leading-snug break-words min-w-0">
                       {item.name || 'Sem título'}
                     </h3>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
                       {hasGeminiAiIngredient && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
                           Estimado por IA – revisar
@@ -198,12 +198,12 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                   </div>
 
                   {item.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 mb-3">
+                    <p className="text-xs text-slate-500 line-clamp-2 mb-3 break-words">
                       {item.description}
                     </p>
                   )}
 
-                  <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 mb-4">
+                  <div className="flex flex-wrap gap-1.5 text-[11px] text-slate-600 mb-4">
                     <span className="bg-slate-100 px-2 py-0.5 rounded-md font-medium">
                       Porção: {item.portionSize}
                       {item.isLiquid ? 'ml' : 'g'}
@@ -212,24 +212,24 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                       {item.ingredients.length} ingr.
                     </span>
                     {item.category && (
-                      <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700">
+                      <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700 break-words max-w-full">
                         {item.category}
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
                   <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
+                    <Calendar className="w-3 h-3 shrink-0" />
                     <span>{dateStr}</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => onDuplicateRecipe(item)}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition"
+                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition cursor-pointer"
                       title="Duplicar receita"
                     >
                       <Copy className="w-4 h-4" />
@@ -238,7 +238,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                     <button
                       type="button"
                       onClick={() => onDeleteRecipe(item.id)}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                       title="Excluir receita"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -254,7 +254,7 @@ export const HistoryList: React.FC<HistoryListProps> = ({
                       }`}
                     >
                       <span>{hasGeminiAiIngredient ? 'Trocar por item da TACO' : 'Abrir'}</span>
-                      <ArrowRight className="w-3 h-3" />
+                      <ArrowRight className="w-3 h-3 shrink-0" />
                     </button>
                   </div>
                 </div>

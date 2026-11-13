@@ -91,10 +91,19 @@ export const NutritionLabel: React.FC<NutritionLabelProps> = ({
     NutritionTableRow
   >;
 
+  const containerWidthClass =
+    format === 'vertical'
+      ? 'w-[320px]'
+      : format === 'vertical_broken'
+        ? 'w-[460px]'
+        : format === 'horizontal'
+          ? 'w-[620px]'
+          : 'w-[380px]';
+
   return (
     <div
       id="anvisa-nutrition-label-container"
-      className="bg-white text-black p-4 border-2 border-black inline-block font-sans max-w-full text-left"
+      className={`bg-white text-black p-4 border-2 border-black inline-block font-sans text-left ${containerWidthClass}`}
       style={{
         fontFamily: 'Arial, Helvetica, sans-serif',
         color: '#000000',
@@ -103,7 +112,7 @@ export const NutritionLabel: React.FC<NutritionLabelProps> = ({
     >
       {/* MODELO VERTICAL PADRÃO */}
       {format === 'vertical' && (
-        <div className="w-full min-w-[280px] max-w-[340px]">
+        <div className="w-full">
           <div className="border-b-2 border-black pb-1 mb-1">
             <h2 className="text-base font-black tracking-tight uppercase leading-none">
               INFORMAÇÃO NUTRICIONAL
@@ -144,7 +153,7 @@ export const NutritionLabel: React.FC<NutritionLabelProps> = ({
 
       {/* MODELO VERTICAL QUEBRADO (DUAS COLUNAS DE NUTRIENTES LADO A LADO) */}
       {format === 'vertical_broken' && (
-        <div className="w-full min-w-[340px] max-w-[500px]">
+        <div className="w-full">
           <div className="border-b-2 border-black pb-1 mb-1">
             <h2 className="text-base font-black tracking-tight uppercase leading-none">
               INFORMAÇÃO NUTRICIONAL
@@ -188,7 +197,7 @@ export const NutritionLabel: React.FC<NutritionLabelProps> = ({
 
       {/* MODELO HORIZONTAL */}
       {format === 'horizontal' && (
-        <div className="w-full min-w-[420px] max-w-[620px]">
+        <div className="w-full">
           <div className="border-b-2 border-black pb-1 mb-1 flex items-baseline justify-between flex-wrap gap-2">
             <h2 className="text-sm font-black tracking-tight uppercase leading-none">
               INFORMAÇÃO NUTRICIONAL
@@ -201,7 +210,7 @@ export const NutritionLabel: React.FC<NutritionLabelProps> = ({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div>
             <table className="w-full text-[10px] border-collapse leading-tight">
               <thead>
                 <tr className="border-b border-black text-center font-bold text-[9px]">
@@ -257,7 +266,7 @@ export const NutritionLabel: React.FC<NutritionLabelProps> = ({
 
       {/* MODELO LINEAR / AGREGADO (PARA EMBALAGENS PEQUENAS) */}
       {format === 'linear' && (
-        <div className="w-full min-w-[280px] max-w-[420px] text-[10px] leading-snug">
+        <div className="w-full text-[10px] leading-snug">
           <div className="font-bold uppercase tracking-tight border-b border-black pb-0.5 mb-1 text-[11px]">
             INFORMAÇÃO NUTRICIONAL
           </div>
@@ -282,7 +291,7 @@ export const NutritionLabel: React.FC<NutritionLabelProps> = ({
 
       {/* INGREDIENTES, ALERGÊNICOS, LACTOSE E GLÚTEN CONFORME RDC 727/2022 E RDC 136/2017 */}
       {(showIngredients || showAllergens) && (
-        <div className="mt-2.5 pt-2 border-t-2 border-black text-[10px] leading-tight space-y-1">
+        <div className="mt-2.5 pt-2 border-t-2 border-black text-[10px] leading-tight space-y-1 break-words">
           {showIngredients && ingredientsText && (
             <p>
               <span className="font-bold uppercase">INGREDIENTES:</span>{' '}

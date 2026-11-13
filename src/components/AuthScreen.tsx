@@ -101,19 +101,19 @@ export const AuthScreen: React.FC = () => {
     };
 
     return (
-      <div className="min-h-screen bg-slate-100/80 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200/90 shadow-lg p-6 sm:p-7 space-y-5">
-          <div className="flex items-center gap-3">
+      <div className="min-h-screen bg-slate-100/80 flex items-center justify-center p-3 sm:p-4">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200/90 shadow-lg p-4 sm:p-7 space-y-5">
+          <div className="flex items-start sm:items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
               <Mail className="w-6 h-6" />
             </div>
-            <div>
-              <h1 className="text-lg font-black text-slate-900 leading-tight">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base sm:text-lg font-black text-slate-900 leading-tight break-words">
                 Confirme seu e-mail para entrar
               </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 break-words">
                 Enviamos um link de confirmação via Brevo para{' '}
-                <strong className="text-slate-800">{user.email}</strong>
+                <strong className="text-slate-800 break-all">{user.email}</strong>
               </p>
             </div>
           </div>
@@ -125,14 +125,14 @@ export const AuthScreen: React.FC = () => {
           {error && (
             <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
-              <span>{error}</span>
+              <span className="min-w-0 break-words">{error}</span>
             </div>
           )}
 
           {infoMessage && (
             <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
-              <span>{infoMessage}</span>
+              <span className="min-w-0 break-words">{infoMessage}</span>
             </div>
           )}
 
@@ -141,12 +141,12 @@ export const AuthScreen: React.FC = () => {
               type="button"
               disabled={submitting}
               onClick={handleCheckConfirmed}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 text-center shadow-xs transition cursor-pointer"
             >
               {submitting ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <RefreshCw className="w-4 h-4 shrink-0 animate-spin" />
               ) : (
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
               )}
               <span>Já confirmei meu e-mail</span>
             </button>
@@ -155,9 +155,9 @@ export const AuthScreen: React.FC = () => {
               type="button"
               disabled={submitting}
               onClick={handleResend}
-              className="w-full py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center justify-center gap-2 text-center transition cursor-pointer"
             >
-              <Mail className="w-3.5 h-3.5" />
+              <Mail className="w-3.5 h-3.5 shrink-0" />
               <span>Reenviar link de confirmação (Brevo)</span>
             </button>
 
@@ -166,7 +166,7 @@ export const AuthScreen: React.FC = () => {
               onClick={logout}
               className="w-full py-2 px-4 rounded-xl text-slate-500 hover:text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-3.5 h-3.5 shrink-0" />
               <span>Sair e usar outra conta</span>
             </button>
           </div>
@@ -216,15 +216,15 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/80 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200/90 shadow-lg p-6 sm:p-7 space-y-5">
+    <div className="min-h-screen bg-slate-100/80 flex flex-col items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200/90 shadow-lg p-4 sm:p-7 space-y-5">
         {/* Marca */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
             <Scale className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">
                 Rótulo<span className="text-emerald-600">Fácil</span>
               </h1>
@@ -276,14 +276,14 @@ export const AuthScreen: React.FC = () => {
         {error && (
           <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
-            <span>{error}</span>
+            <span className="min-w-0 break-words">{error}</span>
           </div>
         )}
 
         {infoMessage && (
           <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-start gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
-            <span>{infoMessage}</span>
+            <span className="min-w-0 break-words">{infoMessage}</span>
           </div>
         )}
 
@@ -327,7 +327,7 @@ export const AuthScreen: React.FC = () => {
 
           {mode !== 'forgot' && (
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex flex-wrap items-center justify-between gap-1 mb-1">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
                   Senha
                 </label>
@@ -363,14 +363,14 @@ export const AuthScreen: React.FC = () => {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm flex items-center justify-center gap-2 text-center leading-snug shadow-xs transition cursor-pointer"
           >
             {submitting ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
+              <RefreshCw className="w-4 h-4 shrink-0 animate-spin" />
             ) : mode === 'forgot' ? (
-              <KeyRound className="w-4 h-4" />
+              <KeyRound className="w-4 h-4 shrink-0" />
             ) : (
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 shrink-0" />
             )}
             <span>
               {mode === 'login'
